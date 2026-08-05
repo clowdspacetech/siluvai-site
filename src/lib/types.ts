@@ -48,6 +48,7 @@ export interface DonationSettings {
   accountNumber: string;
   stripePaymentUrl: string;
   paypalButtonId: string;
+  cardPaymentUrl?: string;
 }
 
 export interface AppData {
