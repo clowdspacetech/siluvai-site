@@ -15,10 +15,10 @@ export function FadeInUp({ children, className, delay = 0, ...props }: FadeInUpP
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 28 }}
+      initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: 0.55, delay, ease: [0.22, 1, 0.36, 1] }}
+      viewport={{ once: true, amount: 0.15 }}
+      transition={{ duration: 0.8, delay, ease: [0.22, 1, 0.36, 1] }}
       className={className}
       {...props}
     >
@@ -49,7 +49,7 @@ export function StaggerContainer({
       className={className}
       initial="hidden"
       whileInView="show"
-      viewport={{ once: true, margin: "-40px" }}
+      viewport={{ once: true, amount: 0.15 }}
       variants={{
         hidden: {},
         show: { transition: { staggerChildren: stagger } },
@@ -77,11 +77,11 @@ export function StaggerItem({
     <motion.div
       className={className}
       variants={{
-        hidden: { opacity: 0, y: 24 },
+        hidden: { opacity: 0, y: 30 },
         show: {
           opacity: 1,
           y: 0,
-          transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+          transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] },
         },
       }}
     >

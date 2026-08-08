@@ -148,12 +148,9 @@ export function youtubeEmbedUrl(url: string): string {
   return url;
 }
 
-export function categoryColors(category: Video["category"]): string {
-  const map: Record<Video["category"], string> = {
-    Leadership: "bg-amber-100 text-amber-800",
-    Sermon: "bg-red-100 text-red-800",
-    Workshop: "bg-blue-100 text-blue-800",
-    Broadcast: "bg-purple-100 text-purple-800",
-  };
-  return map[category] ?? "bg-slate-100 text-slate-800";
+export function categoryColors(_category: Video["category"], isDark = true): string {
+  if (!isDark) {
+    return "border border-amber-500/40 bg-amber-50 text-amber-800";
+  }
+  return "border border-amber-400/40 bg-slate-950/55 text-amber-300 backdrop-blur-md";
 }

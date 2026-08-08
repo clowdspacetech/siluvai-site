@@ -32,10 +32,10 @@ export const defaultAppData: AppData = {
     },
     {
       id: "vid-4",
-      title: "Guest Of The Week 2",
-      publishDate: "2025-09-08",
-      category: "Workshop",
-      url: "https://www.youtube.com/embed/BlJ6a0XkwoA?si=hmSF41Tc12NySQ1O",
+      title: "Ascertaining your Spiritual Gift",
+      publishDate: "2026-04-24",
+      category: "Sermon",
+      url: "https://youtu.be/duolbq_7ouI?si=EaE0zcPnqYq_l_yW",
     },
   ],
   siteContent: {

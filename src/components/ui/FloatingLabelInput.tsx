@@ -1,6 +1,15 @@
 "use client";
 
-import { useId, useState, type InputHTMLAttributes, type SelectHTMLAttributes } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type InputHTMLAttributes,
+} from "react";
+import { ChevronDown } from "lucide-react";
+import { useTheme } from "@/lib/theme-context";
+import { cn, token } from "@/lib/theme-styles";
 
 interface FloatingLabelInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "id"> {
   label: string;
@@ -18,6 +27,7 @@ export function FloatingLabelInput({
   ...props
 }: FloatingLabelInputProps) {
   const id = useId();
+  const { theme, isDark } = useTheme();
   const [focused, setFocused] = useState(false);
   const hasValue = Boolean(value && String(value).length > 0);
   const floated = focused || hasValue;
@@ -41,35 +51,34 @@ export function FloatingLabelInput({
             props.onBlur?.(e);
           }}
           placeholder=" "
-          className={`peer w-full px-4 pt-6 pb-2 rounded-xl border bg-white text-slate-900 transition-all duration-300 focus:outline-none ${
+          className={cn(
+            "peer w-full px-4 pt-6 pb-2 rounded-xl border transition-all duration-300 focus:outline-none",
+            token("input", theme),
             invalid
-              ? "border-red-400 bg-red-50/50"
+              ? "border-red-400/70 focus:border-red-400/70"
               : focused
-                ? "border-amber-500 shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
-                : "border-slate-200 hover:border-slate-300"
-          }`}
+                ? "border-amber-500/50 ring-1 ring-amber-500/50"
+                : isDark
+                  ? "hover:border-white/20"
+                  : "hover:border-slate-300"
+          )}
           {...props}
         />
         <label
           htmlFor={id}
-          className={`pointer-events-none absolute left-4 transition-all duration-300 origin-left ${
+          className={cn(
+            "pointer-events-none absolute left-4 transition-all duration-300 origin-left",
             floated
-              ? "top-2 text-xs scale-90 text-amber-700"
+              ? "top-2 text-xs scale-90 text-amber-600 dark:text-amber-400"
               : "top-1/2 -translate-y-1/2 text-sm text-slate-400"
-          }`}
+          )}
         >
           {label}
-          {required && <span className="text-red-500"> *</span>}
+          {required && <span className="text-amber-500"> *</span>}
         </label>
-        <span
-          aria-hidden
-          className={`pointer-events-none absolute bottom-0 left-1/2 h-0.5 -translate-x-1/2 rounded-full bg-gradient-to-r from-transparent via-amber-500 to-transparent transition-all duration-500 ease-out ${
-            focused && !invalid ? "w-full opacity-100" : "w-0 opacity-0"
-          }`}
-        />
       </div>
       {invalid && (
-        <p id={`${id}-error`} className="mt-1.5 text-sm text-red-600" role="alert">
+        <p id={`${id}-error`} className="mt-1.5 text-sm text-red-500" role="alert">
           {error}
         </p>
       )}
@@ -77,12 +86,18 @@ export function FloatingLabelInput({
   );
 }
 
-interface FloatingLabelSelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, "id"> {
+interface FloatingLabelSelectProps {
   label: string;
   error?: string;
   touched?: boolean;
   options: readonly string[];
   placeholder?: string;
+  className?: string;
+  required?: boolean;
+  value: string;
+  onChange: (event: { target: { value: string } }) => void;
+  onBlur?: () => void;
+  id?: string;
 }
 
 export function FloatingLabelSelect({
@@ -94,67 +109,163 @@ export function FloatingLabelSelect({
   placeholder = "Choose an option...",
   className,
   required,
-  ...props
+  onChange,
+  onBlur,
+  id: providedId,
 }: FloatingLabelSelectProps) {
-  const id = useId();
+  const reactId = useId();
+  const id = providedId ?? reactId;
+  const listId = `${id}-listbox`;
+  const { theme, isDark } = useTheme();
+  const [open, setOpen] = useState(false);
   const [focused, setFocused] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
   const hasValue = Boolean(value && String(value).length > 0);
-  const floated = focused || hasValue;
+  const floated = focused || open || hasValue;
   const invalid = Boolean(touched && error);
 
+  const mergedOptions =
+    !value || options.some((option) => option === value) ? options : [value, ...options];
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onPointer = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+        setFocused(false);
+        onBlur?.();
+      }
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        setFocused(false);
+        onBlur?.();
+      }
+    };
+
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open, onBlur]);
+
+  const selectOption = (next: string) => {
+    onChange({ target: { value: next } });
+    setOpen(false);
+    setFocused(false);
+    onBlur?.();
+  };
+
   return (
-    <div className={className}>
+    <div className={className} ref={rootRef}>
       <div className="relative">
-        <select
+        <button
           id={id}
-          value={value}
-          required={required}
+          type="button"
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          aria-controls={listId}
           aria-invalid={invalid || undefined}
           aria-describedby={invalid ? `${id}-error` : undefined}
-          onFocus={(e) => {
+          onClick={() => {
+            setOpen((prev) => !prev);
             setFocused(true);
-            props.onFocus?.(e);
           }}
-          onBlur={(e) => {
-            setFocused(false);
-            props.onBlur?.(e);
+          onBlur={(event) => {
+            if (!rootRef.current?.contains(event.relatedTarget as Node)) {
+              setFocused(false);
+              setOpen(false);
+              onBlur?.();
+            }
           }}
-          className={`w-full appearance-none px-4 pt-6 pb-2 rounded-xl border bg-white text-slate-900 transition-all duration-300 focus:outline-none ${
+          className={cn(
+            "w-full appearance-none text-left px-4 pt-6 pb-2 pr-11 rounded-xl border transition-all duration-300 focus:outline-none",
+            token("input", theme),
             invalid
-              ? "border-red-400 bg-red-50/50"
-              : focused
-                ? "border-amber-500 shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
-                : "border-slate-200 hover:border-slate-300"
-          } ${!hasValue ? "text-transparent" : ""}`}
-          {...props}
+              ? "border-red-400/70"
+              : open || focused
+                ? "border-amber-500/50 ring-1 ring-amber-500/50"
+                : isDark
+                  ? "hover:border-white/20"
+                  : "hover:border-slate-300"
+          )}
         >
-          <option value="">{placeholder}</option>
-          {options.map((opt) => (
-            <option key={opt} value={opt} className="text-slate-900">
-              {opt}
-            </option>
-          ))}
-        </select>
+          <span
+            className={cn(
+              "block truncate",
+              hasValue ? (isDark ? "text-white" : "text-slate-900") : open || focused ? "text-slate-400" : "text-transparent"
+            )}
+          >
+            {hasValue ? value : placeholder}
+          </span>
+        </button>
         <label
           htmlFor={id}
-          className={`pointer-events-none absolute left-4 transition-all duration-300 origin-left ${
+          className={cn(
+            "pointer-events-none absolute left-4 transition-all duration-300 origin-left",
             floated
-              ? "top-2 text-xs scale-90 text-amber-700"
+              ? "top-2 text-xs scale-90 text-amber-600 dark:text-amber-400"
               : "top-1/2 -translate-y-1/2 text-sm text-slate-400"
-          }`}
+          )}
         >
           {label}
-          {required && <span className="text-red-500"> *</span>}
+          {required && <span className="text-amber-500"> *</span>}
         </label>
-        <span
+        <ChevronDown
+          className={cn(
+            "pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 transition-transform",
+            open && "rotate-180"
+          )}
           aria-hidden
-          className={`pointer-events-none absolute bottom-0 left-1/2 h-0.5 -translate-x-1/2 rounded-full bg-gradient-to-r from-transparent via-amber-500 to-transparent transition-all duration-500 ease-out ${
-            focused && !invalid ? "w-full opacity-100" : "w-0 opacity-0"
-          }`}
         />
+
+        {open && (
+          <ul
+            id={listId}
+            role="listbox"
+            aria-labelledby={id}
+            className={cn(
+              "absolute z-30 mt-2 w-full max-h-60 overflow-auto rounded-xl border py-1 shadow-xl",
+              isDark ? "bg-slate-900 border-white/10 text-white" : "bg-white border-slate-200 text-slate-900"
+            )}
+          >
+            <li
+              role="option"
+              aria-selected={!hasValue}
+              className={cn(
+                "px-4 py-2.5 text-sm cursor-pointer",
+                isDark ? "text-slate-400 hover:bg-white/5" : "text-slate-500 hover:bg-slate-50"
+              )}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => selectOption("")}
+            >
+              {placeholder}
+            </li>
+            {mergedOptions.map((opt) => (
+              <li
+                key={opt}
+                role="option"
+                aria-selected={value === opt}
+                className={cn(
+                  "px-4 py-2.5 text-sm cursor-pointer",
+                  isDark ? "bg-slate-900 text-white hover:bg-amber-400/10" : "bg-white text-slate-900 hover:bg-amber-50",
+                  value === opt && (isDark ? "bg-amber-400/15 text-amber-200" : "bg-amber-50 text-amber-900")
+                )}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => selectOption(opt)}
+              >
+                {opt}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
       {invalid && (
-        <p id={`${id}-error`} className="mt-1.5 text-sm text-red-600" role="alert">
+        <p id={`${id}-error`} className="mt-1.5 text-sm text-red-500" role="alert">
           {error}
         </p>
       )}

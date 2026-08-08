@@ -1,10 +1,13 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useEffect, useState, FormEvent } from "react";
 import { CheckCircle, Loader2 } from "lucide-react";
 import { useReducedMotion } from "framer-motion";
 import { useAppData } from "@/lib/data-context";
 import { EVENT_OPTIONS } from "@/lib/types";
+import { useRegistrationIntent } from "@/lib/registration-intent";
+import { useTheme } from "@/lib/theme-context";
+import { cn, token } from "@/lib/theme-styles";
 import { FadeInUp } from "@/components/motion/FadeInUp";
 import {
   FloatingLabelInput,
@@ -60,12 +63,24 @@ function validate(data: FormData): FormErrors {
 
 export default function RegistrationForm() {
   const { addRegistration } = useAppData();
+  const { intendedEvent } = useRegistrationIntent();
+  const { theme, isDark } = useTheme();
   const reduceMotion = useReducedMotion();
   const [form, setForm] = useState<FormData>(initialForm);
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Partial<Record<keyof FormData, boolean>>>({});
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!intendedEvent) return;
+    setForm((prev) => ({ ...prev, selectedEvent: intendedEvent }));
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next.selectedEvent;
+      return next;
+    });
+  }, [intendedEvent]);
 
   const handleChange = (field: keyof FormData, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -116,26 +131,31 @@ export default function RegistrationForm() {
   };
 
   return (
-    <section id="register" className="py-16 sm:py-24 bg-slate-50">
+    <section id="register" className="relative py-20 sm:py-28">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeInUp className="text-center mb-10">
-          <p className="text-amber-600 font-semibold text-sm uppercase tracking-widest mb-3">
+          <p className={cn(token("eyebrow", theme), "font-semibold text-sm uppercase tracking-[0.22em] mb-4")}>
             Join Us
           </p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
+          <h2 className={cn("text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4", token("heading", theme))}>
             Event Registration
           </h2>
-          <p className="text-slate-600 text-sm sm:text-base">
+          <p className={cn("text-sm sm:text-base", token("body", theme))}>
             Register for upcoming Siluvai Media events and our leadership team will be in touch.
           </p>
         </FadeInUp>
 
         {submitted && (
           <div
-            className="mb-8 flex items-start gap-3 p-5 rounded-2xl bg-green-50 border border-green-200 text-green-800"
+            className={cn(
+              "mb-8 flex items-start gap-3 p-5 rounded-2xl border",
+              isDark
+                ? "bg-emerald-500/10 border-emerald-400/30 text-emerald-200"
+                : "bg-emerald-50 border-emerald-200 text-emerald-800"
+            )}
             role="status"
           >
-            <CheckCircle className="w-6 h-6 shrink-0 mt-0.5" />
+            <CheckCircle className="w-6 h-6 shrink-0 mt-0.5 text-emerald-500" />
             <p className="font-medium">
               Thank you for registering. Our leadership team will contact you shortly.
             </p>
@@ -143,11 +163,7 @@ export default function RegistrationForm() {
         )}
 
         <FadeInUp delay={0.08}>
-          <form
-            onSubmit={handleSubmit}
-            noValidate
-            className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-100 space-y-5"
-          >
+          <form onSubmit={handleSubmit} noValidate className="glass-card p-6 sm:p-8 space-y-5">
             <FloatingLabelInput
               label="Full Name"
               required
@@ -184,6 +200,7 @@ export default function RegistrationForm() {
             />
 
             <FloatingLabelSelect
+              id="registration-event-select"
               label="Selected Event"
               required
               value={form.selectedEvent}
@@ -198,7 +215,7 @@ export default function RegistrationForm() {
             <button
               type="submit"
               disabled={loading}
-              className="btn-shimmer w-full py-3.5 rounded-xl font-semibold text-white bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 hover:scale-[1.02] shadow-md hover:shadow-xl transition-all duration-300 disabled:opacity-70 disabled:pointer-events-none disabled:hover:scale-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 inline-flex items-center justify-center gap-2"
+              className="btn-shimmer btn-gradient-animated w-full py-3.5 rounded-xl font-semibold text-slate-950 shadow-[0_0_24px_rgba(245,158,11,0.28)] hover:scale-[1.02] hover:shadow-[0_0_36px_rgba(245,158,11,0.4)] transition-all duration-300 disabled:opacity-70 disabled:pointer-events-none disabled:hover:scale-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400 inline-flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>

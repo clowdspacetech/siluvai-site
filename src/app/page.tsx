@@ -6,6 +6,7 @@ import VideoHub from "@/components/VideoHub";
 import EventsSection from "@/components/EventsSection";
 import RegistrationForm from "@/components/RegistrationForm";
 import DonationSection from "@/components/DonationSection";
+import ThemedShell from "@/components/ThemedShell";
 import { localRepository } from "@/lib/db/local-repository";
 
 export default async function HomePage() {
@@ -14,14 +15,13 @@ export default async function HomePage() {
   return (
     <>
       <Header />
-      <main>
-        <Hero />
+      <ThemedShell hero={<Hero />}>
         <About />
         <VideoHub />
         <EventsSection events={events} />
         <RegistrationForm />
         <DonationSection />
-      </main>
+      </ThemedShell>
       <Footer />
     </>
   );

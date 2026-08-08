@@ -22,6 +22,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useAppData } from "@/lib/data-context";
 import { formatDate } from "@/lib/data-store";
 import type { Event, VideoCategory } from "@/lib/types";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const CATEGORIES: VideoCategory[] = ["Leadership", "Sermon", "Workshop", "Broadcast"];
 
@@ -249,6 +250,7 @@ export default function AdminDashboard() {
             <p className="text-sm text-slate-500">Content Management Dashboard</p>
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <Link
               href="/"
               className="text-sm text-slate-600 hover:text-slate-900 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 rounded-lg"
