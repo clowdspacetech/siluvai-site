@@ -6,7 +6,13 @@ const nextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
+      {
+        protocol: "https",
+        hostname: "img.youtube.com",
+      },
     ],
+    // Allow local images from /public
+    unoptimized: false,
   },
 
   // 🚀 Bypass Vercel build failures

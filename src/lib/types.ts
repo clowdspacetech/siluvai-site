@@ -51,11 +51,21 @@ export interface DonationSettings {
   cardPaymentUrl?: string;
 }
 
+export interface Event {
+  id: string;
+  title: string;
+  date: string;
+  time?: string;
+  description?: string;
+  imageUrl?: string;
+}
+
 export interface AppData {
   videos: Video[];
   siteContent: SiteContent;
   registrations: RegistrationSubmission[];
   donationSettings: DonationSettings;
+  events: Event[];
 }
 
 export const EVENT_OPTIONS = [

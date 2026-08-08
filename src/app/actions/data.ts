@@ -1,7 +1,13 @@
 "use server";
 
 import { getRepository } from "@/lib/db";
-import type { DonationSettings, RegistrationSubmission, SiteContent, Video } from "@/lib/types";
+import type {
+  DonationSettings,
+  Event,
+  RegistrationSubmission,
+  SiteContent,
+  Video,
+} from "@/lib/types";
 
 export async function fetchAppData() {
   const repo = getRepository();
@@ -28,4 +34,24 @@ export async function addRegistrationAction(
 export async function updateDonationSettingsAction(settings: Partial<DonationSettings>) {
   const repo = getRepository();
   return repo.updateDonationSettings(settings);
+}
+
+export async function getEventsAction() {
+  const repo = getRepository();
+  return repo.getEvents();
+}
+
+export async function addEventAction(event: Omit<Event, "id">) {
+  const repo = getRepository();
+  return repo.addEvent(event);
+}
+
+export async function updateEventAction(id: string, updates: Partial<Omit<Event, "id">>) {
+  const repo = getRepository();
+  return repo.updateEvent(id, updates);
+}
+
+export async function deleteEventAction(id: string) {
+  const repo = getRepository();
+  return repo.deleteEvent(id);
 }

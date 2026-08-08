@@ -1,11 +1,10 @@
-import { isSupabaseConfigured } from "./config";
 import { localRepository } from "./local-repository";
-import { supabaseRepository } from "./supabase-repository";
 import type { DataRepository } from "./types";
 
+/** Local JSON repository only — Supabase wiring deferred */
 export function getRepository(): DataRepository {
-  return isSupabaseConfigured() ? supabaseRepository : localRepository;
+  return localRepository;
 }
 
-export { localRepository, supabaseRepository };
+export { localRepository };
 export type { DataRepository };

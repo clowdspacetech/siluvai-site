@@ -1,6 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
-import type { AppData, DonationSettings, RegistrationSubmission, SiteContent, Video } from "../types";
+import type { AppData, Event } from "../types";
 import { defaultAppData, generateId } from "../data-store";
 import type { DataRepository } from "./types";
 
@@ -32,6 +32,7 @@ function mergeWithDefaults(parsed: Partial<AppData>): AppData {
     },
     videos: parsed.videos ?? defaultAppData.videos,
     registrations: parsed.registrations ?? defaultAppData.registrations,
+    events: parsed.events ?? defaultAppData.events,
   };
 }
 
@@ -95,6 +96,41 @@ export const localRepository: DataRepository = {
     const next: AppData = {
       ...current,
       donationSettings: { ...current.donationSettings, ...settings },
+    };
+    return writeData(next);
+  },
+
+  async getEvents() {
+    const current = await readData();
+    return current.events;
+  },
+
+  async addEvent(event) {
+    const current = await readData();
+    const nextEvent: Event = { ...event, id: generateId("evt") };
+    const next: AppData = {
+      ...current,
+      events: [...current.events, nextEvent].sort((a, b) => a.date.localeCompare(b.date)),
+    };
+    return writeData(next);
+  },
+
+  async updateEvent(id, updates) {
+    const current = await readData();
+    const next: AppData = {
+      ...current,
+      events: current.events
+        .map((ev) => (ev.id === id ? { ...ev, ...updates, id } : ev))
+        .sort((a, b) => a.date.localeCompare(b.date)),
+    };
+    return writeData(next);
+  },
+
+  async deleteEvent(id) {
+    const current = await readData();
+    const next: AppData = {
+      ...current,
+      events: current.events.filter((ev) => ev.id !== id),
     };
     return writeData(next);
   },

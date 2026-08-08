@@ -16,6 +16,137 @@ body {
   color: #0f172a;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .mesh-glow,
+  .btn-shimmer::after,
+  .live-pulse,
+  .video-card:active::after {
+    animation: none !important;
+  }
+}
+
+@keyframes mesh-morph {
+  0%,
+  100% {
+    transform: translate(-8%, -6%) scale(1);
+    opacity: 0.55;
+  }
+  33% {
+    transform: translate(6%, -2%) scale(1.08);
+    opacity: 0.7;
+  }
+  66% {
+    transform: translate(-4%, 8%) scale(0.95);
+    opacity: 0.5;
+  }
+}
+
+@keyframes mesh-morph-alt {
+  0%,
+  100% {
+    transform: translate(10%, 4%) scale(1.05);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translate(-6%, -8%) scale(1.12);
+    opacity: 0.6;
+  }
+}
+
+.mesh-glow {
+  animation: mesh-morph 18s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.mesh-glow-alt {
+  animation: mesh-morph-alt 22s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes shimmer-sweep {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.45) 50%,
+    transparent 60%
+  );
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+
+.btn-shimmer:hover::after,
+.btn-shimmer:focus-visible::after {
+  animation: shimmer-sweep 0.9s ease-out;
+}
+
+@keyframes live-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.65);
+    opacity: 0;
+  }
+}
+
+.live-pulse {
+  animation: live-pulse 1.8s ease-out infinite;
+}
+
+@keyframes video-ripple {
+  from {
+    transform: scale(0);
+    opacity: 1;
+  }
+  to {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.video-card {
+  isolation: isolate;
+}
+
+.video-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
+  transform: scale(0);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.video-card:active::after {
+  animation: video-ripple 0.5s ease-out;
+}
+
 @keyframes fade-in-up {
   from {
     opacity: 0;

@@ -1,9 +1,15 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import { CheckCircle, AlertCircle } from "lucide-react";
+import { CheckCircle, Loader2 } from "lucide-react";
+import { useReducedMotion } from "framer-motion";
 import { useAppData } from "@/lib/data-context";
 import { EVENT_OPTIONS } from "@/lib/types";
+import { FadeInUp } from "@/components/motion/FadeInUp";
+import {
+  FloatingLabelInput,
+  FloatingLabelSelect,
+} from "@/components/ui/FloatingLabelInput";
 
 interface FormData {
   fullName: string;
@@ -54,10 +60,12 @@ function validate(data: FormData): FormErrors {
 
 export default function RegistrationForm() {
   const { addRegistration } = useAppData();
+  const reduceMotion = useReducedMotion();
   const [form, setForm] = useState<FormData>(initialForm);
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Partial<Record<keyof FormData, boolean>>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (field: keyof FormData, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -84,7 +92,7 @@ export default function RegistrationForm() {
     }));
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const validationErrors = validate(form);
     setErrors(validationErrors);
@@ -92,37 +100,41 @@ export default function RegistrationForm() {
 
     if (Object.keys(validationErrors).length > 0) return;
 
-    addRegistration(form);
-    setSubmitted(true);
-    setForm(initialForm);
-    setTouched({});
-    setErrors({});
+    setLoading(true);
+    try {
+      await addRegistration(form);
+      if (!reduceMotion) {
+        await new Promise((r) => setTimeout(r, 450));
+      }
+      setSubmitted(true);
+      setForm(initialForm);
+      setTouched({});
+      setErrors({});
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const inputClass = (field: keyof FormData) =>
-    `w-full px-4 py-3 rounded-xl border text-slate-900 placeholder-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent ${
-      touched[field] && errors[field]
-        ? "border-red-400 bg-red-50"
-        : "border-slate-200 bg-white hover:border-slate-300"
-    }`;
-
   return (
-    <section id="register" className="py-24 bg-slate-50">
+    <section id="register" className="py-16 sm:py-24 bg-slate-50">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-10">
+        <FadeInUp className="text-center mb-10">
           <p className="text-amber-600 font-semibold text-sm uppercase tracking-widest mb-3">
             Join Us
           </p>
           <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
             Event Registration
           </h2>
-          <p className="text-slate-600">
+          <p className="text-slate-600 text-sm sm:text-base">
             Register for upcoming Siluvai Media events and our leadership team will be in touch.
           </p>
-        </div>
+        </FadeInUp>
 
         {submitted && (
-          <div className="mb-8 flex items-start gap-3 p-5 rounded-2xl bg-green-50 border border-green-200 text-green-800">
+          <div
+            className="mb-8 flex items-start gap-3 p-5 rounded-2xl bg-green-50 border border-green-200 text-green-800"
+            role="status"
+          >
             <CheckCircle className="w-6 h-6 shrink-0 mt-0.5" />
             <p className="font-medium">
               Thank you for registering. Our leadership team will contact you shortly.
@@ -130,107 +142,78 @@ export default function RegistrationForm() {
           </div>
         )}
 
-        <form
-          onSubmit={handleSubmit}
-          noValidate
-          className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 space-y-6"
-        >
-          <div>
-            <label htmlFor="fullName" className="block text-sm font-medium text-slate-700 mb-1.5">
-              Full Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              id="fullName"
-              type="text"
+        <FadeInUp delay={0.08}>
+          <form
+            onSubmit={handleSubmit}
+            noValidate
+            className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-100 space-y-5"
+          >
+            <FloatingLabelInput
+              label="Full Name"
+              required
               value={form.fullName}
               onChange={(e) => handleChange("fullName", e.target.value)}
               onBlur={() => handleBlur("fullName")}
-              className={inputClass("fullName")}
-              placeholder="Enter your full name"
+              error={errors.fullName}
+              touched={touched.fullName}
+              autoComplete="name"
             />
-            {touched.fullName && errors.fullName && (
-              <p className="mt-1.5 flex items-center gap-1 text-sm text-red-600">
-                <AlertCircle className="w-4 h-4" />
-                {errors.fullName}
-              </p>
-            )}
-          </div>
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1.5">
-              Email Address <span className="text-red-500">*</span>
-            </label>
-            <input
-              id="email"
+            <FloatingLabelInput
+              label="Email Address"
               type="email"
+              required
               value={form.email}
               onChange={(e) => handleChange("email", e.target.value)}
               onBlur={() => handleBlur("email")}
-              className={inputClass("email")}
-              placeholder="you@example.com"
+              error={errors.email}
+              touched={touched.email}
+              autoComplete="email"
             />
-            {touched.email && errors.email && (
-              <p className="mt-1.5 flex items-center gap-1 text-sm text-red-600">
-                <AlertCircle className="w-4 h-4" />
-                {errors.email}
-              </p>
-            )}
-          </div>
 
-          <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-slate-700 mb-1.5">
-              Phone Number <span className="text-red-500">*</span>
-            </label>
-            <input
-              id="phone"
+            <FloatingLabelInput
+              label="Phone Number"
               type="tel"
+              required
               value={form.phone}
               onChange={(e) => handleChange("phone", e.target.value)}
               onBlur={() => handleBlur("phone")}
-              className={inputClass("phone")}
-              placeholder="+44 7700 900000"
+              error={errors.phone}
+              touched={touched.phone}
+              autoComplete="tel"
             />
-            {touched.phone && errors.phone && (
-              <p className="mt-1.5 flex items-center gap-1 text-sm text-red-600">
-                <AlertCircle className="w-4 h-4" />
-                {errors.phone}
-              </p>
-            )}
-          </div>
 
-          <div>
-            <label htmlFor="selectedEvent" className="block text-sm font-medium text-slate-700 mb-1.5">
-              Selected Event <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="selectedEvent"
+            <FloatingLabelSelect
+              label="Selected Event"
+              required
               value={form.selectedEvent}
               onChange={(e) => handleChange("selectedEvent", e.target.value)}
               onBlur={() => handleBlur("selectedEvent")}
-              className={inputClass("selectedEvent")}
-            >
-              <option value="">Choose an event...</option>
-              {EVENT_OPTIONS.map((event) => (
-                <option key={event} value={event}>
-                  {event}
-                </option>
-              ))}
-            </select>
-            {touched.selectedEvent && errors.selectedEvent && (
-              <p className="mt-1.5 flex items-center gap-1 text-sm text-red-600">
-                <AlertCircle className="w-4 h-4" />
-                {errors.selectedEvent}
-              </p>
-            )}
-          </div>
+              error={errors.selectedEvent}
+              touched={touched.selectedEvent}
+              options={EVENT_OPTIONS}
+              placeholder="Choose an event..."
+            />
 
-          <button
-            type="submit"
-            className="w-full py-3.5 rounded-xl font-semibold text-white bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-md hover:shadow-xl transition-all duration-300"
-          >
-            Register Now
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-shimmer w-full py-3.5 rounded-xl font-semibold text-white bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 hover:scale-[1.02] shadow-md hover:shadow-xl transition-all duration-300 disabled:opacity-70 disabled:pointer-events-none disabled:hover:scale-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 inline-flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2
+                    className={`w-5 h-5 relative z-10 ${reduceMotion ? "" : "animate-spin"}`}
+                    aria-hidden
+                  />
+                  <span className="relative z-10">Registering...</span>
+                </>
+              ) : (
+                <span className="relative z-10">Register Now</span>
+              )}
+            </button>
+          </form>
+        </FadeInUp>
       </div>
     </section>
   );

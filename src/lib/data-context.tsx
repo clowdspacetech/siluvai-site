@@ -2,15 +2,19 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import {
+  addEventAction,
   addRegistrationAction,
   addVideoAction,
+  deleteEventAction,
   fetchAppData,
   updateDonationSettingsAction,
+  updateEventAction,
   updateSiteContentAction,
 } from "@/app/actions/data";
 import type {
   AppData,
   DonationSettings,
+  Event,
   RegistrationSubmission,
   SiteContent,
   Video,
@@ -24,6 +28,9 @@ interface DataContextValue {
   updateSiteContent: (content: Partial<SiteContent>) => Promise<void>;
   addRegistration: (submission: Omit<RegistrationSubmission, "id" | "submittedAt">) => Promise<void>;
   updateDonationSettings: (settings: Partial<DonationSettings>) => Promise<void>;
+  addEvent: (event: Omit<Event, "id">) => Promise<void>;
+  updateEvent: (id: string, updates: Partial<Omit<Event, "id">>) => Promise<void>;
+  deleteEvent: (id: string) => Promise<void>;
   refresh: () => Promise<void>;
 }
 
@@ -70,6 +77,21 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     setData(next);
   }, []);
 
+  const addEvent = useCallback(async (event: Omit<Event, "id">) => {
+    const next = await addEventAction(event);
+    setData(next);
+  }, []);
+
+  const updateEvent = useCallback(async (id: string, updates: Partial<Omit<Event, "id">>) => {
+    const next = await updateEventAction(id, updates);
+    setData(next);
+  }, []);
+
+  const deleteEvent = useCallback(async (id: string) => {
+    const next = await deleteEventAction(id);
+    setData(next);
+  }, []);
+
   return (
     <DataContext.Provider
       value={{
@@ -79,6 +101,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         updateSiteContent,
         addRegistration,
         updateDonationSettings,
+        addEvent,
+        updateEvent,
+        deleteEvent,
         refresh,
       }}
     >
@@ -91,6 +116,29 @@ export function useAppData() {
   const ctx = useContext(DataContext);
   if (!ctx) throw new Error("useAppData must be used within DataProvider");
   return ctx;
+}
+
+export function extractYouTubeId(url: string): string | null {
+  try {
+    const trimmed = url.trim();
+    const match = trimmed.match(
+      /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([^&\s?/]+)/
+    );
+    if (match?.[1]) return match[1];
+
+    const parts = trimmed.split("/");
+    const last = parts[parts.length - 1]?.split(/[?&]/)[0];
+    return last || null;
+  } catch {
+    return null;
+  }
+}
+
+export function youtubeThumbnail(url: string): string {
+  const id = extractYouTubeId(url);
+  return id
+    ? `https://img.youtube.com/vi/${id}/maxresdefault.jpg`
+    : "/images/video-fallback.svg";
 }
 
 export function youtubeEmbedUrl(url: string): string {
